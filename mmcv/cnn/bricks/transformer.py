@@ -758,6 +758,16 @@ class BaseTransformerLayer(BaseModule):
         for _ in range(num_norms):
             self.norms.append(build_norm_layer(norm_cfg, self.embed_dims)[1])
 
+    '''def forward(self,
+                query,
+                key=None,
+                value=None,
+                query_pos=None,
+                key_pos=None,
+                attn_masks=None,
+                query_key_padding_mask=None,
+                key_padding_mask=None,
+                **kwargs):'''
     def forward(self,
                 query,
                 key=None,
@@ -767,6 +777,9 @@ class BaseTransformerLayer(BaseModule):
                 attn_masks=None,
                 query_key_padding_mask=None,
                 key_padding_mask=None,
+                reference_points=None,
+                spatial_shapes=None,
+                level_start_index=None,
                 **kwargs):
         """Forward function for `TransformerDecoderLayer`.
 
@@ -830,6 +843,10 @@ class BaseTransformerLayer(BaseModule):
                     attn_mask=attn_masks[attn_index],
                     key_padding_mask=query_key_padding_mask,
                     **kwargs)
+                '''query = self.attentions[attn_index](
+                    query,
+                    temp_key,
+                    temp_value)'''
                 attn_index += 1
                 identity = query
 
@@ -847,7 +864,15 @@ class BaseTransformerLayer(BaseModule):
                     key_pos=key_pos,
                     attn_mask=attn_masks[attn_index],
                     key_padding_mask=key_padding_mask,
+                    reference_points=reference_points,
+                    spatial_shapes=spatial_shapes,
+                    level_start_index=level_start_index,
                     **kwargs)
+                key = value
+                '''query = self.attentions[attn_index](
+                    query,
+                    key,
+                    value)[0]'''
                 attn_index += 1
                 identity = query
 
@@ -895,7 +920,7 @@ class TransformerLayerSequence(BaseModule):
         self.embed_dims = self.layers[0].embed_dims
         self.pre_norm = self.layers[0].pre_norm
 
-    def forward(self,
+    '''def forward(self,
                 query,
                 key,
                 value,
@@ -904,7 +929,20 @@ class TransformerLayerSequence(BaseModule):
                 attn_masks=None,
                 query_key_padding_mask=None,
                 key_padding_mask=None,
-                **kwargs):
+                **kwargs):'''
+    def forward(self,
+            query,
+            key=None,
+            value=None,
+            query_pos=None,
+            key_pos=None,
+            attn_masks=None,
+            query_key_padding_mask=None,
+            key_padding_mask=None,
+            reference_points=None,
+            spatial_shapes=None,
+            level_start_index=None,
+            **kwargs):
         """Forward function for `TransformerCoder`.
 
         Args:
@@ -931,14 +969,19 @@ class TransformerLayerSequence(BaseModule):
             Tensor:  results with shape [num_queries, bs, embed_dims].
         """
         for layer in self.layers:
+            import pdb
+            pdb.set_trace()
             query = layer(
                 query,
-                key,
-                value,
+                key=key,
+                value=value,
                 query_pos=query_pos,
                 key_pos=key_pos,
                 attn_masks=attn_masks,
                 query_key_padding_mask=query_key_padding_mask,
                 key_padding_mask=key_padding_mask,
+                reference_points=reference_points,
+                spatial_shapes=spatial_shapes,
+                level_start_index=level_start_index,
                 **kwargs)
         return query
